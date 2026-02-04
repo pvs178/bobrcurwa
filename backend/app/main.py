@@ -4,12 +4,17 @@ from fastapi import FastAPI
 
 from app.api.tasks import router as tasks_router
 from app.db.session import init_db
+from app.services.queue import QueueClient
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    queue = QueueClient()
+    await queue.start()
+    app.state.queue = queue
     yield
+    await queue.stop()
 
 
 app = FastAPI(
