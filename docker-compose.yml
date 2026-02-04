@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tasks
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/tasks
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      TASK_QUEUE_NAME: task_queue
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  worker:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/tasks
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      TASK_QUEUE_NAME: task_queue
+    command: ["uv", "run", "python", "-m", "app.worker"]
+    depends_on:
+      - postgres
+      - rabbitmq
+
+volumes:
+  pgdata:
