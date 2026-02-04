@@ -22,3 +22,14 @@ async def set_task_failed(session: AsyncSession, task: Task, result: str) -> Non
     task.status = TaskStatus.failed
     task.result = result
     await session.commit()
+
+
+async def set_task_processing(session: AsyncSession, task: Task) -> None:
+    task.status = TaskStatus.processing
+    await session.commit()
+
+
+async def set_task_done(session: AsyncSession, task: Task, result: str) -> None:
+    task.status = TaskStatus.done
+    task.result = result
+    await session.commit()
